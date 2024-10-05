@@ -5,42 +5,44 @@ import models.ProcessImp;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeSet;
-import java.util.concurrent.TimeUnit;
 
-public class FCFSAlgorithm implements SchedulingAlgorithm {
+public class SJFPreemptiveAlgorithm implements SchedulingAlgorithm {
 
-    private TreeSet<ProcessImp> readyQueue; // The ready queue of processes sorted by arrival time
+    private TreeSet<ProcessImp> readyQueue; // The ready queue of processes sorted by remaining time
     private ProcessImp currentProcess = null; // The currently running process
     private int currentTime = 0; // System clock
     private int totalProcesses; // Total number of processes
     private int completedProcesses = 0; // Tracks how many processes have been completed
     private Map<Integer, List<ProcessImp>> processStore; // Stores processes by their arrival time
 
-    public FCFSAlgorithm(Map<Integer, List<ProcessImp>> tempProcessStore, int totalProcesses) {
+    public SJFPreemptiveAlgorithm(Map<Integer, List<ProcessImp>> tempProcessStore, int totalProcesses) {
         this.totalProcesses = totalProcesses;
         this.processStore = tempProcessStore;
         this.readyQueue = new TreeSet<>((p1, p2) -> {
             if (p1 == null) return 1;
             if (p2 == null) return -1;
-            return Integer.compare(p1.getArrivalTime(), p2.getArrivalTime()); // Sort by arrival time
+            if (p1.getBurstTime() == p2.getBurstTime()) {
+                return Integer.compare(p1.getArrivalTime(), p2.getArrivalTime());
+            }
+            return Integer.compare(p1.getBurstTime(), p2.getBurstTime());
         });
     }
 
     @Override
     public void add(ProcessImp process) {
         if (process != null) {
-            readyQueue.add(process); // Add process to the sorted ready queue
+            readyQueue.add(process);
         }
     }
 
     @Override
     public void remove(ProcessImp process) {
-        readyQueue.remove(process); // Remove process from the ready queue
+        readyQueue.remove(process);
     }
 
     @Override
     public void execute() {
-        // Main scheduling loop
+        // Main scheduling loop - processes the queue and scheduling decisions
         while (completedProcesses < totalProcesses) {
 
             // Add processes to the ready queue that have arrived at the current time
@@ -54,10 +56,22 @@ public class FCFSAlgorithm implements SchedulingAlgorithm {
                 }
             }
 
+            // Preempt the current process if necessary
+            if (currentProcess != null && !readyQueue.isEmpty()) {
+                ProcessImp shortestProcess = readyQueue.first(); // Get the process with the shortest remaining time
+                if (shortestProcess.getBurstTime() < currentProcess.getBurstTime()) {
+                    System.out.println("Preempting Process ID: " + currentProcess.getProcessID() +
+                            " for Process ID: " + shortestProcess.getProcessID());
+                    readyQueue.add(currentProcess); // Add the current process back to the ready queue
+                    currentProcess = shortestProcess; // Switch to the new process
+                    readyQueue.remove(shortestProcess); // Remove the new process from the ready queue
+                }
+            }
+
             // If no process is running and the ready queue is not empty, start the next process
             if (currentProcess == null && !readyQueue.isEmpty()) {
-                currentProcess = readyQueue.first(); // Get the process with the earliest arrival time
-                readyQueue.remove(currentProcess); // Remove it from the ready queue
+                currentProcess = readyQueue.first();
+                readyQueue.remove(currentProcess);
                 System.out.println("Starting Process ID: " + currentProcess.getProcessID() + " at time: " + currentTime);
             }
 
@@ -66,31 +80,34 @@ public class FCFSAlgorithm implements SchedulingAlgorithm {
                 System.out.println("Executing Process ID: " + currentProcess.getProcessID() + " at time: " + currentTime
                         + " | Remaining Time: " + currentProcess.getRemainingTime());
 
-                currentProcess.setRemainingTime(currentProcess.getRemainingTime() - 1); // Decrease remaining time by 1 unit
+                currentProcess.setRemainingTime(currentProcess.getRemainingTime() - 1); // Decrease the remaining time first
 
                 // Check if the current process is finished
                 if (currentProcess.getRemainingTime() == 0) {
-                    System.out.println("Process ID: " + currentProcess.getProcessID() + " completed at time: " + (currentTime + 1));
-                    currentProcess.setCompletionTime(currentTime + 1); // Set completion time
-                    currentProcess.setTurnaroundTime(currentProcess.getCompletionTime() - currentProcess.getArrivalTime()); // Turnaround time
-                    currentProcess.setWaitingTime(currentProcess.getTurnaroundTime() - currentProcess.getBurstTime()); // Waiting time
-                    currentProcess = null; // Mark no process running
+                    System.out.println("Process ID: " + currentProcess.getProcessID() + " completed at time: " + currentTime+1);
+                    currentProcess.setCompletionTime(currentTime + 1); // Set the completion time as time after finishing this second
+                    currentProcess.setTurnaroundTime(currentProcess.getCompletionTime() - currentProcess.getArrivalTime()); // Set turnaround time
+                    currentProcess.setWaitingTime(currentProcess.getTurnaroundTime() - currentProcess.getBurstTime()); // Set waiting time
+                    currentProcess = null; // Mark as no process is currently running
                     completedProcesses++; // Increment completed processes count
                 }
             }
 
-            // Increment the system clock
+            // Now, increment the system clock only after decreasing the remaining time
             currentTime++;
 
-            // Simulate time passage (for real-time execution visualization)
+            // Simulate the time increment by waiting (this can be removed for real-time display updates)
             try {
-                TimeUnit.SECONDS.sleep(1); // Simulate 1 second of execution
+                Thread.sleep(1000); // Simulate a 1-second wait
             } catch (InterruptedException e) {
                 System.out.println("Simulation interrupted.");
                 break;
             }
+
+
         }
 
+        // All processes have been completed
         System.out.println("All processes completed at time: " + currentTime);
         display();
     }

@@ -1,6 +1,6 @@
 package models;
 
-public class ProcessImp implements Runnable {
+public class ProcessImp {
     private int ProcessID;
     private int arrivalTime;
     private int burstTime;
@@ -64,19 +64,5 @@ public class ProcessImp implements Runnable {
     public void setCompleted(boolean isCompleted) {
         this.isCompleted = isCompleted;
     }
-    @Override
-    public void run(){
-        try{
-            while(remainingTime > 0){
-                remainingTime--;
-                Thread.sleep(1000);
-
-                System.out.println("Process ID: " + ProcessID + " | Remaining Time: " + remainingTime);
-            }
-            isCompleted = true;
-            
-        }catch(InterruptedException e){
-            e.printStackTrace();
-        }
-    }
+    
 }
