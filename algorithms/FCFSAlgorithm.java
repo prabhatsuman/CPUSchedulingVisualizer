@@ -1,6 +1,7 @@
 package algorithms;
 
 import models.ProcessImp;
+import visualization.SimulationListener;
 
 import java.util.List;
 import java.util.Map;
@@ -27,19 +28,7 @@ public class FCFSAlgorithm implements SchedulingAlgorithm {
     }
 
     @Override
-    public void add(ProcessImp process) {
-        if (process != null) {
-            readyQueue.add(process); // Add process to the sorted ready queue
-        }
-    }
-
-    @Override
-    public void remove(ProcessImp process) {
-        readyQueue.remove(process); // Remove process from the ready queue
-    }
-
-    @Override
-    public void execute() {
+    public void execute(SimulationListener listener) {
         // Main scheduling loop
         while (completedProcesses < totalProcesses) {
 
@@ -48,17 +37,18 @@ public class FCFSAlgorithm implements SchedulingAlgorithm {
             if (arrivedProcesses != null) {
                 for (ProcessImp process : arrivedProcesses) {
                     if (!readyQueue.contains(process)) {
-                        add(process);
+                        readyQueue.add(process); // Add process to the ready queue
                         System.out.println("Process ID: " + process.getProcessID() + " arrived at time: " + currentTime);
+                        listener.onProcessArrived(process); // Notify the listener
                     }
                 }
             }
 
             // If no process is running and the ready queue is not empty, start the next process
             if (currentProcess == null && !readyQueue.isEmpty()) {
-                currentProcess = readyQueue.first(); // Get the process with the earliest arrival time
-                readyQueue.remove(currentProcess); // Remove it from the ready queue
+                currentProcess = readyQueue.pollFirst(); // Get the next process in the queue
                 System.out.println("Starting Process ID: " + currentProcess.getProcessID() + " at time: " + currentTime);
+                listener.onProcessStarted(currentProcess); // Notify the listener
             }
 
             // Execute the current process if there is one
@@ -67,6 +57,7 @@ public class FCFSAlgorithm implements SchedulingAlgorithm {
                         + " | Remaining Time: " + currentProcess.getRemainingTime());
 
                 currentProcess.setRemainingTime(currentProcess.getRemainingTime() - 1); // Decrease remaining time by 1 unit
+                listener.onProcessUpdated(currentProcess); // Notify listener of remaining time update
 
                 // Check if the current process is finished
                 if (currentProcess.getRemainingTime() == 0) {
@@ -74,6 +65,7 @@ public class FCFSAlgorithm implements SchedulingAlgorithm {
                     currentProcess.setCompletionTime(currentTime + 1); // Set completion time
                     currentProcess.setTurnaroundTime(currentProcess.getCompletionTime() - currentProcess.getArrivalTime()); // Turnaround time
                     currentProcess.setWaitingTime(currentProcess.getTurnaroundTime() - currentProcess.getBurstTime()); // Waiting time
+                    listener.onProcessCompleted(currentProcess); // Notify listener of process completion
                     currentProcess = null; // Mark no process running
                     completedProcesses++; // Increment completed processes count
                 }
@@ -81,6 +73,8 @@ public class FCFSAlgorithm implements SchedulingAlgorithm {
 
             // Increment the system clock
             currentTime++;
+
+            listener.onClockUpdate(currentTime); // Notify listener of clock update
 
             // Simulate time passage (for real-time execution visualization)
             try {
@@ -118,5 +112,10 @@ public class FCFSAlgorithm implements SchedulingAlgorithm {
                 System.out.println("No process is currently running.");
             }
         }
+    }
+
+    @Override
+    public String getAlgorithmName() {
+        return "First Come First Serve Scheduling";
     }
 }
