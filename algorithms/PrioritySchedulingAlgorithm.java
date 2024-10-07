@@ -6,42 +6,36 @@ import visualization.SimulationListener;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeSet;
-import java.util.concurrent.TimeUnit;
 
-public class FCFSAlgorithm implements SchedulingAlgorithm {
-
-    private TreeSet<ProcessImp> readyQueue;
-    private ProcessImp currentProcess = null;
+public class PrioritySchedulingAlgorithm implements SchedulingAlgorithm {
     private int currentTime = 0;
     private int totalProcesses;
     private int completedProcesses = 0;
     private Map<Integer, List<ProcessImp>> processStore;
+    private TreeSet<ProcessImp> readyQueue;
+    private ProcessImp currentProcess = null;
 
-    public FCFSAlgorithm(Map<Integer, List<ProcessImp>> tempProcessStore, int totalProcesses) {
+    public PrioritySchedulingAlgorithm(Map<Integer, List<ProcessImp>> processStore, int totalProcesses) {
         this.totalProcesses = totalProcesses;
-        this.processStore = tempProcessStore;
+        this.processStore = processStore;
         this.readyQueue = new TreeSet<>((p1, p2) -> {
-            if (p1 == null)
-                return 1;
-            if (p2 == null)
-                return -1;
-            return Integer.compare(p1.getArrivalTime(), p2.getArrivalTime());
+            if (p1.getPriority() == p2.getPriority()) {
+                return Integer.compare(p1.getArrivalTime(), p2.getArrivalTime());
+            }
+            return Integer.compare(p2.getPriority(), p1.getPriority()); // Sort in decreasing order of priority
         });
     }
 
     @Override
     public void execute(SimulationListener listener) {
-
         while (completedProcesses < totalProcesses) {
-
             List<ProcessImp> arrivedProcesses = processStore.get(currentTime);
+
             if (arrivedProcesses != null) {
                 for (ProcessImp process : arrivedProcesses) {
                     if (!readyQueue.contains(process)) {
                         readyQueue.add(process);
                         listener.onReadyQueueUpdated(readyQueue);
-                        System.out
-                                .println("Process ID: " + process.getProcessID() + " arrived at time: " + currentTime);
                         listener.onProcessArrived(process);
                     }
                 }
@@ -49,25 +43,26 @@ public class FCFSAlgorithm implements SchedulingAlgorithm {
 
             if (currentProcess == null && !readyQueue.isEmpty()) {
                 currentProcess = readyQueue.pollFirst();
-                System.out
-                        .println("Starting Process ID: " + currentProcess.getProcessID() + " at time: " + currentTime);
                 listener.onProcessStarted(currentProcess);
+                listener.onReadyQueueUpdated(readyQueue);
+            } else if (currentProcess != null && !readyQueue.isEmpty()) {
+                ProcessImp highestPriorityProcess = readyQueue.first();
+                if (highestPriorityProcess.getPriority() > currentProcess.getPriority()) {
+                    listener.onProcessPreempted(currentProcess);
+                    readyQueue.add(currentProcess);
+                    currentProcess = readyQueue.pollFirst();
+                    listener.onProcessStarted(currentProcess);
+                    listener.onReadyQueueUpdated(readyQueue);
+                }
             }
 
             if (currentProcess != null) {
-                System.out.println("Executing Process ID: " + currentProcess.getProcessID() + " at time: " + currentTime
-                        + " | Remaining Time: " + currentProcess.getRemainingTime());
-
                 currentProcess.setRemainingTime(currentProcess.getRemainingTime() - 1);
                 listener.onProcessUpdated(currentProcess);
 
                 if (currentProcess.getRemainingTime() == 0) {
-                    System.out.println("Process ID: " + currentProcess.getProcessID() + " completed at time: "
-                            + (currentTime + 1));
                     currentProcess.setCompletionTime(currentTime + 1);
-                    currentProcess
-                            .setTurnaroundTime(currentProcess.getCompletionTime() - currentProcess.getArrivalTime());
-                    currentProcess.setWaitingTime(currentProcess.getTurnaroundTime() - currentProcess.getBurstTime());
+                    currentProcess.setTurnaroundTime(currentProcess.getCompletionTime() - currentProcess.getArrivalTime());
                     listener.onProcessCompleted(currentProcess);
                     currentProcess = null;
                     completedProcesses++;
@@ -75,26 +70,22 @@ public class FCFSAlgorithm implements SchedulingAlgorithm {
             }
 
             currentTime++;
-
             listener.onClockUpdate(currentTime);
 
             try {
-                TimeUnit.SECONDS.sleep(1);
+                Thread.sleep(1000);
             } catch (InterruptedException e) {
                 System.out.println("Simulation interrupted.");
                 break;
             }
         }
 
-        System.out.println("All processes completed at time: " + currentTime);
         listener.onSimulationCompleted(processStore.values().stream().flatMap(List::stream).toList());
-        // display();
     }
 
     @Override
     public void display() {
         if (completedProcesses == totalProcesses) {
-
             int totalWaitingTime = 0;
             int totalTurnaroundTime = 0;
             for (List<ProcessImp> processes : processStore.values()) {
@@ -110,6 +101,6 @@ public class FCFSAlgorithm implements SchedulingAlgorithm {
 
     @Override
     public String getAlgorithmName() {
-        return "First Come First Serve Scheduling";
+        return "Priority Scheduling Algorithm (Preemptive)";
     }
 }

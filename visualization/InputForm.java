@@ -14,15 +14,11 @@ public class InputForm extends JFrame {
     private List<ProcessImp> processList = new ArrayList<>();
     private JTextField arrivalField, burstField, priorityField;
     private int processCount = 0;
-    private String selectedAlgorithm;
 
-    public InputForm(String selectedAlgorithm, int numberOfProcesses) {
-        this.selectedAlgorithm = selectedAlgorithm;
-
+    public InputForm(String selectedAlgorithm, int numberOfProcesses, int timeQuantum) {
         setTitle("CPU Scheduling Input Form");
         setLayout(new GridLayout(5, 2));
 
-        // Input fields for process properties
         JLabel arrivalLabel = new JLabel("Arrival Time: ");
         arrivalField = new JTextField();
         JLabel burstLabel = new JLabel("Burst Time: ");
@@ -36,7 +32,6 @@ public class InputForm extends JFrame {
         add(burstLabel);
         add(burstField);
 
-        // Add priority field only if Priority Scheduling is selected
         if (selectedAlgorithm.equals("Priority Scheduling")) {
             add(priorityLabel);
             add(priorityField);
@@ -49,6 +44,8 @@ public class InputForm extends JFrame {
         add(addButton);
         add(visualizeButton);
 
+        visualizeButton.setEnabled(false); // Disable visualization button until processes are added
+
         // Action listener for adding processes
         addButton.addActionListener(new ActionListener() {
             @Override
@@ -56,7 +53,9 @@ public class InputForm extends JFrame {
                 try {
                     int arrivalTime = Integer.parseInt(arrivalField.getText());
                     int burstTime = Integer.parseInt(burstField.getText());
-                    int priority = selectedAlgorithm.equals("Priority Scheduling") ? Integer.parseInt(priorityField.getText()) : 0;
+                    int priority = selectedAlgorithm.equals("Priority Scheduling")
+                            ? Integer.parseInt(priorityField.getText())
+                            : 0;
 
                     processCount++;
                     processList.add(new ProcessImp(processCount, arrivalTime, burstTime, priority));
@@ -71,6 +70,7 @@ public class InputForm extends JFrame {
                     // Disable adding more processes if the limit is reached
                     if (processCount == numberOfProcesses) {
                         addButton.setEnabled(false);
+                        visualizeButton.setEnabled(true);
                     }
 
                 } catch (NumberFormatException ex) {
@@ -85,7 +85,7 @@ public class InputForm extends JFrame {
             public void actionPerformed(ActionEvent e) {
                 if (!processList.isEmpty()) {
                     // Launch the common visualizer with the selected algorithm and processes
-                    new CommonVisualizer(selectedAlgorithm, processList);
+                    new CommonVisualizer(selectedAlgorithm, processList, timeQuantum);
                     dispose(); // Close the input form
                 } else {
                     JOptionPane.showMessageDialog(null, "No processes added. Please add processes first.");
