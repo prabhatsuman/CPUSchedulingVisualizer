@@ -20,9 +20,12 @@ public class PrioritySchedulingAlgorithm implements SchedulingAlgorithm {
         this.processStore = processStore;
         this.readyQueue = new TreeSet<>((p1, p2) -> {
             if (p1.getPriority() == p2.getPriority()) {
+                if(p1.getArrivalTime() == p2.getArrivalTime()) {
+                    return Integer.compare(p1.getProcessID(), p2.getProcessID());
+                }
                 return Integer.compare(p1.getArrivalTime(), p2.getArrivalTime());
             }
-            return Integer.compare(p2.getPriority(), p1.getPriority()); // Sort in decreasing order of priority
+            return Integer.compare(p2.getPriority(), p1.getPriority()); 
         });
     }
 

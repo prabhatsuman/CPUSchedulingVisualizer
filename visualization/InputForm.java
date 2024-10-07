@@ -17,7 +17,8 @@ public class InputForm extends JFrame {
 
     public InputForm(String selectedAlgorithm, int numberOfProcesses, int timeQuantum) {
         setTitle("CPU Scheduling Input Form");
-        setLayout(new GridLayout(5, 2));
+        setLayout(new GridLayout(5, 2));  
+    
 
         JLabel arrivalLabel = new JLabel("Arrival Time: ");
         arrivalField = new JTextField();
@@ -26,7 +27,6 @@ public class InputForm extends JFrame {
         JLabel priorityLabel = new JLabel("Priority: ");
         priorityField = new JTextField();
 
-        // Add components to the form
         add(arrivalLabel);
         add(arrivalField);
         add(burstLabel);
@@ -37,16 +37,14 @@ public class InputForm extends JFrame {
             add(priorityField);
         }
 
-        // Buttons to add process and start visualization
+        
         JButton addButton = new JButton("Add Process");
         JButton visualizeButton = new JButton("Start Visualization");
 
         add(addButton);
         add(visualizeButton);
 
-        visualizeButton.setEnabled(false); // Disable visualization button until processes are added
-
-        // Action listener for adding processes
+        visualizeButton.setEnabled(false); 
         addButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -59,15 +57,13 @@ public class InputForm extends JFrame {
 
                     processCount++;
                     processList.add(new ProcessImp(processCount, arrivalTime, burstTime, priority));
-
-                    // Clear fields after adding
+                
                     arrivalField.setText("");
                     burstField.setText("");
                     if (selectedAlgorithm.equals("Priority Scheduling")) {
                         priorityField.setText("");
                     }
 
-                    // Disable adding more processes if the limit is reached
                     if (processCount == numberOfProcesses) {
                         addButton.setEnabled(false);
                         visualizeButton.setEnabled(true);
@@ -79,7 +75,7 @@ public class InputForm extends JFrame {
             }
         });
 
-        // Action listener to start visualization
+     
         visualizeButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {

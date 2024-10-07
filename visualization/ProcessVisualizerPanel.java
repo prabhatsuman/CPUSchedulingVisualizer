@@ -29,8 +29,8 @@ public class ProcessVisualizerPanel extends JPanel {
         remainingTimeLabel.setText("Remaining: " + remainingTime);
     }
 
-    public void markAsCompleted() {
+    public void markAsCompleted(int completionTime) {
         progressBar.setValue(progressBar.getMaximum());
-        remainingTimeLabel.setText("Completed");
+        remainingTimeLabel.setText("Completed at: " + completionTime);
     }
 }

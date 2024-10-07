@@ -25,6 +25,9 @@ public class SJFNonPreemptiveAlgorithm implements SchedulingAlgorithm {
             if (p2 == null)
                 return -1;
             if (p1.getBurstTime() == p2.getBurstTime()) {
+                if(p1.getArrivalTime() == p2.getArrivalTime()) {
+                    return Integer.compare(p1.getProcessID(), p2.getProcessID());
+                }
                 return Integer.compare(p1.getArrivalTime(), p2.getArrivalTime());
             }
             return Integer.compare(p1.getBurstTime(), p2.getBurstTime());

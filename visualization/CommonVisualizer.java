@@ -134,7 +134,7 @@ public class CommonVisualizer extends JFrame implements SimulationListener {
     public void onProcessCompleted(ProcessImp process) {
         ProcessVisualizerPanel panel = processPanels.get(process.getProcessID());
         if (panel != null) {
-            panel.markAsCompleted();
+            panel.markAsCompleted(process.getCompletionTime());
         }
     }
 

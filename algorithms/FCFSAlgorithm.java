@@ -5,12 +5,13 @@ import visualization.SimulationListener;
 
 import java.util.List;
 import java.util.Map;
-import java.util.TreeSet;
+import java.util.Queue;
+import java.util.LinkedList;
 import java.util.concurrent.TimeUnit;
 
 public class FCFSAlgorithm implements SchedulingAlgorithm {
 
-    private TreeSet<ProcessImp> readyQueue;
+    private Queue<ProcessImp> readyQueue;
     private ProcessImp currentProcess = null;
     private int currentTime = 0;
     private int totalProcesses;
@@ -20,13 +21,7 @@ public class FCFSAlgorithm implements SchedulingAlgorithm {
     public FCFSAlgorithm(Map<Integer, List<ProcessImp>> tempProcessStore, int totalProcesses) {
         this.totalProcesses = totalProcesses;
         this.processStore = tempProcessStore;
-        this.readyQueue = new TreeSet<>((p1, p2) -> {
-            if (p1 == null)
-                return 1;
-            if (p2 == null)
-                return -1;
-            return Integer.compare(p1.getArrivalTime(), p2.getArrivalTime());
-        });
+        this.readyQueue = new LinkedList<>();
     }
 
     @Override
@@ -48,7 +43,8 @@ public class FCFSAlgorithm implements SchedulingAlgorithm {
             }
 
             if (currentProcess == null && !readyQueue.isEmpty()) {
-                currentProcess = readyQueue.pollFirst();
+                currentProcess = readyQueue.poll();
+                listener.onReadyQueueUpdated(readyQueue);
                 System.out
                         .println("Starting Process ID: " + currentProcess.getProcessID() + " at time: " + currentTime);
                 listener.onProcessStarted(currentProcess);
@@ -88,7 +84,7 @@ public class FCFSAlgorithm implements SchedulingAlgorithm {
 
         System.out.println("All processes completed at time: " + currentTime);
         listener.onSimulationCompleted(processStore.values().stream().flatMap(List::stream).toList());
-        // display();
+ 
     }
 
     @Override

@@ -35,6 +35,7 @@ public class RoundRobinAlgorithm implements SchedulingAlgorithm {
                     readyQueue.add(process);
                     System.out.println("Process ID: " + process.getProcessID() + " arrived at time: " + currentTime);
                     listener.onProcessArrived(process);
+                    listener.onReadyQueueUpdated(readyQueue);
                 }
             }
 
@@ -43,6 +44,7 @@ public class RoundRobinAlgorithm implements SchedulingAlgorithm {
                 timeSlice = 0;
                 System.out.println("Starting Process ID: " + currentProcess.getProcessID() + " at time: " + currentTime);
                 listener.onProcessStarted(currentProcess);
+                listener.onReadyQueueUpdated(readyQueue);
             }
 
             if (currentProcess != null) {
@@ -68,6 +70,7 @@ public class RoundRobinAlgorithm implements SchedulingAlgorithm {
                     System.out.println("Preempting Process ID: " + currentProcess.getProcessID() + " at time: " + currentTime);
                     readyQueue.add(currentProcess);
                     listener.onProcessPreempted(currentProcess);
+                    listener.onReadyQueueUpdated(readyQueue);
                     currentProcess = null;
                 }
             }
@@ -85,7 +88,7 @@ public class RoundRobinAlgorithm implements SchedulingAlgorithm {
 
         System.out.println("All processes completed at time: " + currentTime);
         listener.onSimulationCompleted(processStore.values().stream().flatMap(List::stream).toList());
-        // display();
+       
     }
 
     @Override
